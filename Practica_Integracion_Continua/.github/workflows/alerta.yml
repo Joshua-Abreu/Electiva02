@@ -1,0 +1,40 @@
+name: CI y Notificación ntfy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-notify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar el código del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Ejecutar Hola Mundo
+        run: node index.js
+
+      - name: Enviar notificación a ntfy.sh
+        if: success()
+        run: |
+          curl -H "Title: Despliegue Exitoso en Main" \
+               -H "Priority: default" \
+               -H "Tags: white_check_mark,rocket" \
+               -d "El commit '${{ github.event.head_commit.message }}' por ${{ github.actor }} ejecutó el Hola Mundo correctamente." \
+               https://ntfy.sh/devops-itla
+
+      - name: Enviar notificación de error en caso de fallo
+        if: failure()
+        run: |
+          curl -H "Title: Fallo en CI" \
+               -H "Priority: high" \
+               -H "Tags: x,warning" \
+               -d "El workflow falló en la rama main durante el commit de ${{ github.actor }}." \
+               https://ntfy.sh/devops-itla
